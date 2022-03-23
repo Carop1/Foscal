@@ -1,0 +1,82 @@
+#include <SoftwareSerial.h>
+#include <String.h>
+SoftwareSerial Sim900Serial(7, 8);//Configuración de los pines serial por software
+int estacion = 1;
+int poten = A0;
+int value = 300;
+//String token = "MflVJvlOyrTKtWqDGFx9xIrxal1ZaMee2h69WylSBKF3wxy7jv";
+//char url = "GET https://paginasopitcdmb.atwebpages.com/conexiondb.php?dato=";
+//char url = "GET http://localhost:8000/adriana?dato=";
+char url = "GET http://localhost/PaginaCDMB/db_connect.php?dato=";
+void setup()
+{
+Sim900Serial.begin(19200);//Arduino se comunica con el SIM900 a una velocidad de 19200bps   
+Serial.begin(19200);//Velocidad del puerto serial de arduino
+
+//Encendido del módulo por software
+
+
+digitalWrite(9, HIGH);
+delay(2000);
+digitalWrite(9, LOW);
+delay(20000);//Tiempo prudencial para el escudo inicie sesión de red con tu operador
+}
+void loop(){  
+  //value = analogRead(poten); // se lee el valor analogo
+ // Serial.print(value);
+  //value = value*5/1023;
+  comandosAT();//Llama a la función comandosAT  
+  if(Sim900Serial.available())//Verificamos si hay datos disponibles desde el SIM900
+  Serial.write(Sim900Serial.read());//Escribir datos
+}
+void comandosAT(){
+Sim900Serial.println("AT+CIPSTATUS");//Consultar el estado actual de la conexión
+delay(2000);
+Sim900Serial.println("AT+CIPMUX=0");//comando configura el dispositivo para una conexión IP única o múltiple 0=única
+delay(3000);
+mostrarDatosSeriales();
+Sim900Serial.println("AT+CSTT=\"internet.movistar.com.co\",\"movistar\",\"movistar\"");//comando configura el APN, nombre de usuario y contraseña."gprs.movistar.com.ar","wap","wap"->Movistar Arg.
+delay(1000);
+mostrarDatosSeriales();
+Sim900Serial.println("AT+CIICR");//REALIZAR UNA CONEXIÓN INALÁMBRICA CON GPRS O CSD
+delay(3000);
+mostrarDatosSeriales();
+Sim900Serial.println("AT+CIFSR");// Obtenemos nuestra IP local
+delay(2000);
+mostrarDatosSeriales();
+Sim900Serial.println("AT+CIPSPRT=0");//Establece un indicador '>' al enviar datos
+grados();
+delay(3000);
+mostrarDatosSeriales();
+Sim900Serial.println("AT+CIPSTART=\"TCP\",\"adriana.parraweb.com\",\"80\"");//Indicamos el tipo de conexión, url o dirección IP y puerto al que realizamos la conexión
+delay(6000);
+mostrarDatosSeriales();
+Sim900Serial.println("AT+CIPSEND");//ENVÍA DATOS A TRAVÉS DE una CONEXIÓN TCP O UDP
+delay(4000);
+mostrarDatosSeriales();
+
+//String datos= "GET  https://adriana.parraweb.com/api/dispositivos/agregar-dato?token=0" + String("MflVJvlOyrTKtWqDGFx9xIrxal1ZaMee2h69WylSBKF3wxy7jv") + "&dato=0" + String(value);
+//String datos= "GET  /api/dispositivos/agregar-dato?token=MflVJvlOyrTKtWqDGFx9xIrxal1ZaMee2h69WylSBKF3wxy7jv&dato=200";// + String(value);
+//String datos= "GET  /adriana.php HTTP/1.1 Host: www.parraweb.com\r\n";// + String(value);
+//String datos = "GET /api/agregar-dato?token=MflVJvlOyrTKtWqDGFx9xIrxal1ZaMee2h69WylSBKF3wxy7jv&dato=" + String(value) + " HTTP/1.1\r\nHost: www.parraweb.com\r\n";
+String datos = " GET   https://adriana.parraweb.com/api/dispositivos/agregar-dato?token=MflVJvlOyrTKtWqDGFx9xIrxal1ZaMee2h69WylSBKF3wxy7jv&dato=900\"";
+Sim900Serial.println(datos);//Envía datos al servidor remoto
+delay(4000);
+mostrarDatosSeriales();
+Sim900Serial.println((char)26);
+delay(5000);//Ahora esperaremos una respuesta pero esto va a depender de las condiones de la red y este valor quizá debamos modificarlo dependiendo de las condiciones de la red
+Sim900Serial.println();
+mostrarDatosSeriales();
+Sim900Serial.println("AT+CIPSHUT");//Cierra la conexión(Desactiva el contexto GPRS PDP)
+delay(5000);
+mostrarDatosSeriales();
+delay(20000);
+} 
+void mostrarDatosSeriales()//Muestra los datos que va entregando el sim900
+{
+while(Sim900Serial.available()!=0)
+Serial.write(Sim900Serial.read());
+}
+void grados(){//Función para la lectura del sensor de temepratura
+Serial.println(value);
+}
