@@ -1,0 +1,149 @@
+#include <TimerOne.h>
+
+
+#define senti 8
+const int led = 13;  // the pin with a LED
+int ledState = LOW;    // El LED empieza apagado
+volatile unsigned long blinkCount = 0; // La definimos como volatile
+volatile int contador = 0; 
+unsigned long N;  // Haremos copia del blinkCount
+float velocidad = 0;
+float Sp = 0;
+float t = 0;
+
+float G11 = 0.08991;
+float G21 = 0.26499;
+float G12 = -0.2192;
+float G22 = 0.90543;
+
+float H11 = 0.0331;
+float H21 = 0.01428;
+
+float C11 = 0;
+float C12 = 6.1286;
+
+float Ki = 0.04012;
+
+float K11 = 0.41805; // Kest
+float K12 = 1.2112;
+
+float E = 0;
+
+float Vk = 0;
+
+float Du = 0;
+
+float Ka = 0.000001; // antiwindup
+
+float Vk_1 = 0;
+
+float Xob11 = 0;
+float Xob21 = 0;
+
+float Xob_11 = 0;
+float Xob_21 = 0;
+
+float L11 = -0.0020;
+float L21 = 0.0089;
+
+float salida = 0;
+float U = 0;
+float sentido = 0;
+float Setpoint = A5;
+float un=0;
+
+void setup() {
+  // put your setup code here, to run once:
+       pinMode(31, OUTPUT);
+       pinMode(4, OUTPUT); // Negro
+       pinMode(5, OUTPUT); // Morado
+       pinMode(senti, INPUT);
+       Timer1.initialize(20000);         // Dispara cada 250 ms
+       Timer1.attachInterrupt(ISR_Blink); // Activa la interrupcion y la asocia a ISR_Blink
+       Serial.begin(9600);
+       attachInterrupt( 0, Pulsos, RISING);
+       
+}
+void ISR_Blink()
+   {   
+     
+     noInterrupts(); 
+     //Serial.println(contador);     // Suspende las interrupciones
+     Sp = analogRead(Setpoint);
+     Sp = Sp*5/1023;
+     Sp = 40*Sp-100;
+      digitalWrite(31,HIGH);
+//      if (Sp>=100)
+//      {
+//        Sp = -Sp-100;
+//      }
+     
+      sentido = digitalRead(senti);
+       N = contador;
+       velocidad = (N*200*60/6533);
+       if (sentido==0){
+         velocidad = velocidad;
+       }
+       else {
+         velocidad = velocidad*(-1);
+       }
+       contador = 0;
+       E = Sp-velocidad;
+
+  
+      Vk=E+Vk_1-Ka*Du;
+      un=Ki*Vk-(K11*Xob_11+K12*Xob_21);
+  
+      if (un >= 100)
+      {
+            un =100;
+      }
+      if (un <= -100)
+      {
+            un =-100;
+      }
+      U = abs((un*255)/100);
+  
+      if (un <= 0){
+          analogWrite(5,U);
+          analogWrite(4,LOW);
+          }
+
+      if (un >=0){
+          analogWrite(4,U);
+          analogWrite(5,LOW);
+          } 
+  
+  
+        Xob11=(G11-L11*C11)*Xob_11+(G12-L11*C12)*Xob_21+H11*U+L11*velocidad;
+        Xob21=(G21-L21*C11)*Xob_11+(G22-L21*C12)*Xob_21+H21*U+L21*velocidad;
+  
+        Vk_1=Vk;
+        Du=un-U;
+  
+        Xob_11=Xob11;
+        Xob_21=Xob21;
+        
+        interrupts(); 
+   }
+   
+   void Pulsos() 
+   {    
+     contador++;
+     
+   }
+   
+void loop() {
+  // put your main code here, to run repeatedly:
+  t =millis();
+  
+        Serial.print(t/1000);
+        Serial.print("  ");
+        Serial.print(velocidad);
+        Serial.print("  ");
+        Serial.print(un);
+        Serial.print("  ");
+        Serial.print(Sp);
+        Serial.print("  ");
+        Serial.println(E);
+}
