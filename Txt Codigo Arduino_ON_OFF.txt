@@ -1,0 +1,235 @@
+#include <Ticker.h>
+#include <max6675.h>
+
+// Controlador 1 ---------------
+int sp1c1 = 0;
+int sp2c1 = 0;
+unsigned long Tc1 = 0;
+const int salidaCon1 = 2; // salida al relé
+int ktcSO = 8;
+int ktcCS = 9;
+int ktcCLK = 10;
+float grados = 0;
+int setpoint1 = 0;
+boolean bandera1 = false;
+unsigned long tiempo = 0; // tiempo de millis
+unsigned long tiempoInicial = 0;
+int val1 = 0;  // pulsador de inicio setpoint 2
+int inPin1 = 28;
+int pulstart1 = 0; // pulsador inicio controlador
+int start1 = 29;
+
+// Controlador 2 ----------------
+int sp1c2 = 0;
+int sp2c2 = 0;
+unsigned long Tc2 = 0;
+const int salidaCon2 = 3; 
+int ktcSO2 = 36;
+int ktcCS2 = 38;
+int ktcCLK2 = 40;
+float grados2 = 0;
+int setpoint2 = 0;
+boolean bandera2 = false;
+unsigned long tiempoInicial2 = 0;
+int val2 = 0;  // pulsador de inicio setpoint 2
+int inPin2 = 30;
+int pulstart2 = 0; // pulsador inicio controlador
+int start2 = 31;
+
+// Controlador 3 -----------------
+int sp1c3 = 0;
+int sp2c3 = 0;
+unsigned long Tc3 = 0;
+const int salidaCon3 = 4; 
+int ktcSO3 = 44;
+int ktcCS3 = 46;
+int ktcCLK3 = 48;
+float grados3 = 0;
+int setpoint3 = 0;
+boolean bandera3 = false;
+unsigned long tiempoInicial3 = 0;
+int val3 = 0;  // pulsador de inicio setpoint 2
+int inPin3 = 32;
+int pulstart3 = 0; // pulsador inicio controlador
+int start3 = 33;
+
+
+MAX6675 ktc1(ktcCLK, ktcCS, ktcSO);
+MAX6675 ktc2(ktcCLK2, ktcCS2, ktcSO2);
+MAX6675 ktc3(ktcCLK3, ktcCS3, ktcSO3);
+
+int pos,posComa,posPuntos,posGuion;
+String cad,cad1,cad2,cad3,cad4;
+
+
+void EnvioDatos(){
+
+  grados = ktc1.readCelsius();
+  grados2 = ktc2.readCelsius();
+  grados3 = ktc3.readCelsius();
+   Serial.print(grados);
+   Serial.print("=");
+   Serial.print(grados2);
+   Serial.print(":");
+   Serial.println(grados3);
+  return grados, grados2, grados3;
+}
+Ticker Enviar(EnvioDatos,1000);
+
+void setup() {
+  Serial.begin(9600);
+  delay(30);  
+  pinMode(salidaCon1 , OUTPUT);
+  pinMode(salidaCon2 , OUTPUT);
+  pinMode(salidaCon3 , OUTPUT);
+  pinMode(inPin1, INPUT);
+  pinMode(start1, INPUT);
+  pinMode(inPin2, INPUT);
+  pinMode(start2, INPUT);
+  pinMode(inPin3, INPUT);
+  pinMode(start3, INPUT);
+  Enviar.start();  
+}
+
+void loop() {
+  if(Serial.available()){
+    cad = Serial.readString();
+     
+    posComa = cad.indexOf(',');
+    posPuntos = cad.indexOf(':');
+    posGuion = cad.indexOf('-');
+    cad1= cad.substring(0,posComa);
+    cad2= cad.substring(posComa+1,posPuntos);
+    cad3= cad.substring(posPuntos+1,posGuion);
+    cad4= cad.substring(posGuion+1);
+
+   if(cad1.toInt()==1){
+       sp1c1 = cad2.toInt();
+       sp2c1 = cad3.toInt();
+       Tc1 = cad4.toInt();
+   }
+   if(cad1.toInt()==2){
+       sp1c2 = cad2.toInt();
+       sp2c2 = cad3.toInt();
+       Tc2 = cad4.toInt();
+   }
+    
+    if(cad1.toInt()==3){
+       sp1c3 = cad2.toInt();
+       sp2c3 = cad3.toInt();
+       Tc3 = cad4.toInt();
+    }
+        
+         
+  }
+    tiempo = millis();
+    
+   // Controlador 1 ---------------------------
+    
+    pulstart1 = digitalRead(start1); // pulsador para iniciar controlador 1
+    val1 = digitalRead(inPin1);   // pulsador para inicio segundo setpoint
+    
+    if(pulstart1 == HIGH){
+
+      if(bandera1 == false){
+      setpoint1 = sp1c1;
+      }
+            
+    if(val1 == HIGH){
+      tiempoInicial = tiempo;
+      bandera1 = !bandera1;
+    }
+    if(tiempo >= (tiempoInicial+Tc1)){
+      bandera1 = false;
+    
+    }
+    if(bandera1 == true){
+      setpoint1 = sp2c1;
+    }
+
+    if (grados < setpoint1){
+    digitalWrite(salidaCon1, HIGH);
+      }
+    if (grados >=setpoint1){
+    digitalWrite(salidaCon1, LOW);
+      }
+    
+    }
+    if(pulstart1 == LOW){
+      bandera1 = false;
+      digitalWrite(salidaCon1, LOW);
+    }
+    // Controlador 2 ---------------------------
+    
+    pulstart2 = digitalRead(start2); // pulsador para iniciar controlador 2
+    val2 = digitalRead(inPin2);   // pulsador para inicio segundo setpoint
+    
+    if(pulstart2 == HIGH){
+
+      if(bandera2 == false){
+      setpoint2 = sp1c2;
+      }
+            
+    if(val2 == HIGH){
+      tiempoInicial2 = tiempo;
+      bandera2 = !bandera2;
+    }
+    if(tiempo >= (tiempoInicial2+Tc2)){
+      bandera2 = false;
+    
+    }
+    if(bandera2 == true){
+      setpoint2 = sp2c2;
+    }
+
+    if (grados2 < setpoint2){
+    digitalWrite(salidaCon2, HIGH);
+      }
+    if (grados2 >=setpoint2){
+    digitalWrite(salidaCon2, LOW);
+      }
+    
+    }
+    if(pulstart2 == LOW){
+      bandera2 = false;
+      digitalWrite(salidaCon2, LOW);
+    }
+    // Controlador 3 ---------------------------
+    
+    pulstart3 = digitalRead(start3); // pulsador para iniciar controlador 3
+    val3 = digitalRead(inPin3);   // pulsador para inicio segundo setpoint
+    
+    if(pulstart3 == HIGH){
+
+      if(bandera3 == false){
+      setpoint3 = sp1c3;
+      }
+            
+    if(val3 == HIGH){
+      tiempoInicial3 = tiempo;
+      bandera3 = !bandera3;
+    }
+    if(tiempo >= (tiempoInicial3+Tc3)){
+      bandera3 = false;
+    
+    }
+    if(bandera3 == true){
+      setpoint3 = sp2c3;
+    }
+
+    if (grados3 < setpoint3){
+    digitalWrite(salidaCon3, HIGH);
+      }
+    if (grados3 >=setpoint3){
+    digitalWrite(salidaCon3, LOW);
+      }
+    
+    }
+    if(pulstart3 == LOW){
+      bandera3 = false;
+      digitalWrite(salidaCon3, LOW);
+    }
+    
+   Enviar.update();
+
+}
