@@ -1,0 +1,110 @@
+Tmax = 0.05;
+% Frecuencia de Nyquist
+F1 = 2300;   % Se tomo un poco mas de la frecuencia de Nyquist
+T = 1/F1;
+
+N = round(Tmax/T)*2+1;
+n = -round(Tmax/T):round(Tmax/T);
+h = diferenciar(n,T);
+% Figura del diferenciador
+figure
+stem(n,h); ylabel('Amplitud');title('diferenciador');
+xc1 = @(tc) cos(2*pi*1000*tc);
+F = 1000; 
+tc = 0:1e-4:5/F;
+x = xc1(n*T);
+xconv= conv(x,h);
+Xr1 = reconstruir(N,T,tc,xconv);
+% Normalización
+Xr = (1/(max(Xr1(:)))).*Xr1;
+figure
+plot(tc,xc1(tc)); xlabel('Time [sec]'); ylabel('Amplitud'); title('cos(2pi1000t')
+figure
+plot(tc,Xr); xlabel('Time [sec]'); ylabel('Amplitud Normalizada');
+
+Tmax = 0.1;
+% Frecuencia de muestreo 
+F3 = 22000; % Es un poco mayor a la de Nyquist que es de 20000
+T1 = 1/F3;
+N = round(Tmax/T1)*2;
+n1 = -round(Tmax/T1):round(Tmax/T1);
+h1 = diferenciar(n1,T1);
+% figure
+% stem(n1,h1)
+xc2 = @(t) cos(2*pi*1000*t)+2*sin(2*pi*1e4*t);
+F1 = 10000; 
+tc1 = -10/F1:1e-5:10/F1;
+figure
+plot(tc1,xc2(tc1)); xlabel('Time [sec]'); ylabel('Amplitud'); title('cos(2*pi*1000*t)+2*sin(2*pi*1e4*t)')
+x1 = xc2(n1*T1);
+x1conv= conv(x1,h1);
+Xr2 = reconstruir(N,T1,tc1,x1conv);
+% Normalización
+Xr2 = (1/(max(Xr2(:)))).*Xr2;
+figure
+plot(tc1,Xr2); xlabel('Time [sec]'); ylabel('Amplitud Normalizada');
+
+F2 = 1000; 
+tc3 = -5/F2:1e-5:5/F2;
+xc4 =@(tc3) (1+cos(2*pi*1000*tc3)).*(tc3>=-0.0005).*(tc3<0.0005);
+figure
+plot(tc3,xc4(tc3)); xlabel('Time [sec]'); ylabel('Amplitud');
+Tmax = 0.1;
+% Frecuencia de muestreo 
+F4 = 2300;
+T3 = 1/F4;
+N = round(Tmax/T3)*2;
+n = -round(Tmax/T3):round(Tmax/T3);
+h3 = diferenciar(n,T3);
+x3 = xc4(n*T3);
+x3conv= conv(x3,h3);
+Xr3 = reconstruir(N,T3,tc3,x3conv);
+% Normalización
+X3 = (1/(max(Xr3(:)))).*Xr3;
+figure
+plot(tc3,X3); xlabel('Time [sec]'); ylabel('Amplitud Normalizada');
+
+fs = 100;
+t = -5:1/fs:5-1/fs;
+tc3 = -20/fs:1e-5:20/fs;
+Tmax = 1;
+% Frecuencia de muestreo
+F5 = 20;
+T3 = 1/F5;
+N = round(Tmax/T3)*2;
+n = -round(Tmax/T3):round(Tmax/T3);
+x4 = @(t) sawtooth(2*pi*1*t);
+figure
+plot(t,x4(t)); xlabel('Time [sec]'); ylabel('Amplitud'); title('sawtooth');
+h3 = diferenciar(n,T3);
+x3 = x4(n*T3);
+x4conv= conv(x3,h3);
+Xr4 = reconstruir(N,T3,tc3,x4conv);
+% Normalización
+Xr44 = (1/(max(Xr4(:)))).*Xr4;
+figure
+plot(tc3,Xr44); xlabel('Time [sec]'); ylabel('Amplitud Normalizada');
+
+
+Funcion h[n]
+function [h] = diferenciar(n,T)
+Hn = length(n);
+h=zeros(1,Hn);
+for i=1:Hn
+       
+    h(i) = cos(pi*(n(i)))/((n(i))*T);
+end
+a = round(Hn/2);
+h(a)=0;
+end
+
+Funcion para reconstruir la señal
+function [xr] = reconstruir(N,T,tc,x)
+xr = zeros(size(tc));
+for t = 1:length(tc)
+    for n = 0:N-1
+        xr(t) = xr(t) + x(n+1)*sin(pi*(tc(t)-n*T)/T)/(pi*(tc(t)-n*T)/T);
+    end
+end
+
+end

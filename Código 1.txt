@@ -1,0 +1,56 @@
+% Señal para la transformada rapida
+Fs = 100;           % Sampling frequency
+t = -0.5:1/Fs:0.5;  % Time vector 
+L = length(t);      % Signal length
+n = 2^nextpow2(L);
+x = 1/(4*sqrt(2*pi*0.01))*(exp(-t.^2/(2*0.01)));
+% Transformadas Rapidas de Fourier
+h = fft(x);
+u = Fast_Fourier_Transform(x);
+r = FFT_tiempo(x);
+
+f = Fs*(0:(n/2))/n;
+P = abs(h/n);
+O = abs(u/n);
+L = abs(r/n);
+
+hold on
+plot(f,P(1:n/2+1));ylabel('|P(f)|'); xlabel('Frecuencia');title('Gaussian Pulse in Frequency Domain')
+plot(f,O(1:n/2+1))
+plot(f,L(1:n/2+1))
+hold off
+
+function z=Fast_Fourier_Transform(x)
+
+N=length(x);
+z=zeros(1,N);
+Sum=0;
+for k=1:N
+    for jj=1:N
+        Sum=Sum+x(jj)*exp(-2*pi*j*(jj-1)*(k-1)/N);
+    end
+z(k)=Sum;
+Sum=0;
+end
+end
+
+function z=FFT_tiempo(x)
+
+N=length(x);
+z=zeros(1,N);
+Sum1=0;
+Sum2=0;
+SumT = 0;
+for k=1:N
+    for n=1:(N/2)-1
+        Sum1=Sum1+x(2*n)*exp(-2*pi*j*(2*n-1)*(k-1)/N);
+        Sum2=Sum2+x(2*n+1)*exp(-2*pi*j*(2*n)*(k-1)/N);
+        SumT = Sum1+Sum2;
+    end
+z(k)=SumT;
+Sum1=0;
+Sum2=0;
+SumT=0;
+end
+ end
+ 
