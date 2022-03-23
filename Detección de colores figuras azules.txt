@@ -1,0 +1,69 @@
+import numpy as np
+import cv2
+ 
+cam = cv2.VideoCapture(1)
+img_counter = 0
+cv2.namedWindow("test")
+out = 0
+Minarea = 500
+while True:
+    ret, frame = cam.read()
+    
+    cv2.imshow("test", frame) 
+ 
+ # Convert BGR to HSV
+    imgray = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    
+        # Convert BGR to HSV
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    # define range of blue color in HSV
+    lower_blue = np.array([120,40,90])
+    upper_blue = np.array([150,255,255])
+
+# Threshold the HSV image to get only blue colors
+    mask = cv2.inRange(hsv, lower_blue, upper_blue)
+    kernel = np.ones((3,3),np.uint8)
+    mask = cv2.morphologyEx(mask,cv2.MORPH_OPEN,kernel, iterations = 2)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    connectivity = 4  
+    # Perform the operation
+    output = cv2.connectedComponentsWithStats(mask, connectivity, cv2.CV_32S)
+    cv2.imshow("taaa", mask)
+    # Get the results
+    # The first cell is the number of labels
+    num_labels = output[0]
+    # The second cell is the label matrix
+    labels = output[1]
+    # The third cell is the stat matrix
+    stats = output[2]
+    # The fourth cell is the centroid matrix
+    centroids = output[3]
+    
+    for x in range(1, num_labels):
+        x1 = int(stats[x,0])
+        y1 = np.int(stats[x,1])
+        an1 = np.int(stats[x,2])
+        al1 = np.int(stats[x,3])
+        B3 = mask[y1:y1+al1, x1:x1+an1]
+        im2,contours,hierarchy = cv2.findContours(B3, 1, 2)
+        cnt = contours[0]
+        area = cv2.contourArea(cnt)
+        if area >= Minarea: 
+            bandera = 1
+            print("Hay algo azul")
+        else:
+            bandera = 0
+    print("esta vacio")
+    if not ret:
+        break
+    k = cv2.waitKey(1)
+
+    if k%256 == 27:
+        # ESC pressed
+        print("Escape hit, closing...")
+        break
+
+cam.release() 
+out.release()
+cv2.destroyAllWindows()
